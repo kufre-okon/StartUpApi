@@ -24,10 +24,10 @@ namespace StartUpApi.Repository
                 var perms = permissions.Select(e => e.permissionID);
                 permissions.AddRange(r.ROLE.ROLEPERMISSIONS.Where(e => !perms.Contains(e.permissionId)).Select(e => new PermissionViewModel()
                 {
-                    displayname = e.PERMISSION.displayname,
-                    name = e.PERMISSION.name,
-                    level = e.PERMISSION.level,
-                    parentid = e.PERMISSION.parentid,
+                    displayname = e.PERMISSION.DisplayName,
+                    name = e.PERMISSION.Name,
+                    level = e.PERMISSION.Level,
+                    parentid = e.PERMISSION.ParentId,
                     // ParentName = e.PERMISSION.PARENTPERMISSION.name,
                     permissionID = e.permissionId
                 }).ToList());

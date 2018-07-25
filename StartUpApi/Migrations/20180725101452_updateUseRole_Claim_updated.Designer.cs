@@ -9,9 +9,10 @@ using StartUpApi.Models.Enums;
 namespace StartUpApi.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20180725101452_updateUseRole_Claim_updated")]
+    partial class updateUseRole_Claim_updated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.2")

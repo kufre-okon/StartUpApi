@@ -9,6 +9,8 @@ using StartUpApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Threading.Tasks;
+using StartUpApi.Data;
+using System;
 
 namespace StartUpApi
 {
@@ -34,6 +36,18 @@ namespace StartUpApi
 
             services.AddIdentity<ApplicationUser, ApplicationRole>(cfg =>
             {
+                cfg.Password.RequireDigit = true;
+                cfg.Password.RequiredLength = 6;
+                cfg.Password.RequireNonAlphanumeric = true;
+                cfg.Password.RequireUppercase = false;
+                
+                cfg.SignIn.RequireConfirmedEmail = true;
+
+                cfg.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                cfg.Lockout.MaxFailedAccessAttempts = 5;
+                
+                cfg.User.RequireUniqueEmail = true;
+
                 // if we are accessing the /api and an unauthorized request is made
                 // do not redirect to the login page, but simply return "Unauthorized"
                 cfg.Cookies.ApplicationCookie.Events = new CookieAuthenticationEvents
@@ -50,22 +64,24 @@ namespace StartUpApi
             .AddEntityFrameworkStores<ApplicationContext>()
             .AddDefaultTokenProviders();
 
-            // services.AddMvc();
+            services.AddScoped<IDbInitializer, DbInitializer>();
+
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IDbInitializer dbSeeder)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-
+            
             app.UseIdentity();
 
             app.UseJwtBearerAuthentication(new JwtBearerOptions
             {
                 AutomaticAuthenticate = true,
                 AutomaticChallenge = true,
-                TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                TokenValidationParameters = new TokenValidationParameters
                 {
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetSection("AppConfiguration:Key").Value)),
                     ValidAudience = Configuration.GetSection("AppConfiguration:AppIssuer").Value,
@@ -74,6 +90,10 @@ namespace StartUpApi
                     ValidIssuer = Configuration.GetSection("AppConfiguration:AppIssuer").Value
                 }
             });
+
+            app.UseMvc();
+
+            dbSeeder.Seed().Wait();
         }
     }
 }

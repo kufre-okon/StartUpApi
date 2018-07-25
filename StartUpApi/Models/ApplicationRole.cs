@@ -7,13 +7,18 @@ using System.Threading.Tasks;
 
 namespace StartUpApi.Models
 {
-    public class ApplicationRole : IdentityRole
+    public class ApplicationRole : IdentityRole<string>
     {
         public ApplicationRole()
         {
             Id = Guid.NewGuid().ToString();
-            ROLEPERMISSIONS = new HashSet<ApplicationRolePermission>();
-            APPLICATIONUSERS = new HashSet<ApplicationUser>();
+            ROLEPERMISSIONS = new HashSet<ApplicationRolePermission>();         
+        }
+
+        public ApplicationRole(string name)
+            : this()
+        {
+            Name = name;
         }
 
         /// <summary>
@@ -29,7 +34,6 @@ namespace StartUpApi.Models
 
         public DateTime DateCreated { get; set; }
 
-        public virtual ICollection<ApplicationRolePermission> ROLEPERMISSIONS { get; set; }
-        public virtual ICollection<ApplicationUser> APPLICATIONUSERS { get; set; }
+        public virtual ICollection<ApplicationRolePermission> ROLEPERMISSIONS { get; set; }       
     }
 }

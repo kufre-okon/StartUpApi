@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace StartUpApi.Models
 {
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : IdentityUser<string>
     {
         public ApplicationUser()
         {
-            Id = Guid.NewGuid().ToString();
-            ROLES = new HashSet<ApplicationRole>();
+            Id = Guid.NewGuid().ToString();            
         }
 
         public string FirstName { get; set; }
@@ -21,6 +20,5 @@ namespace StartUpApi.Models
         public bool IsActive { get; set; }
         public bool IsTemporaryPassword { get; set; }
 
-        public virtual ICollection<ApplicationRole> ROLES { get; set; }
     }
 }

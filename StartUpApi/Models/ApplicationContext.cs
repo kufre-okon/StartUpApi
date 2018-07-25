@@ -18,19 +18,16 @@ namespace StartUpApi.Models
         public DbSet<ApplicationUserRole> ApplicationUserRoles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<UserPermission> UserPermissions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
-        {
-            base.OnModelCreating(builder);
-
+        {           
             builder.Entity<ApplicationUser>().HasKey(s => s.Id);
             builder.Entity<ApplicationRole>().HasKey(s => s.Id);
-
-
             builder.Ignore<IdentityRole>();
             builder.Ignore<IdentityRoleClaim<string>>();
             builder.Ignore<IdentityUserClaim<string>>();
@@ -43,12 +40,14 @@ namespace StartUpApi.Models
             ApplicationUserMapping.Map(builder);
             ApplicationRolePermissionMapping.Map(builder);
             ApplicationUserRoleMapping.Map(builder);
-           
+            ApplicationUserPermissionMapping.Map(builder);
             //builder.Conventions.Remove<OneToManyCascadeDeleteConvention>();
             //builder.Conventions.Remove<ManyToManyCascadeDeleteConvention>();
             //builder.Conventions.Remove<PluralizingTableNameConvention>();
         }
     }
+
+    #region mappings
 
     public class ApplicationRoleMapping
     {
@@ -73,14 +72,26 @@ namespace StartUpApi.Models
         public static void Map(ModelBuilder modelBuilder)
         {
             var builder = modelBuilder.Entity<ApplicationUserRole>();
-            builder.ToTable("ApplicationUserRole")
+            builder.HasKey(x => new
+            {
+                x.UserId,
+                x.RoleId
+            });
+        }
+    }
+    public class ApplicationUserPermissionMapping
+    {
+        public static void Map(ModelBuilder modelBuilder)
+        {
+            var builder = modelBuilder.Entity<UserPermission>();
+            builder.ToTable("UserPermission")
                 .HasKey(x => new
                 {
-                    x.UserId,
-                    x.RoleId
+                    x.permissionId,
+                    x.userId
                 });
-            builder.Property(x => x.UserId).HasColumnName("UserId");
-            builder.Property(x => x.RoleId).HasColumnName("RoleId");
+            builder.Property(x => x.permissionId).HasColumnName("permissionId");
+            builder.Property(x => x.userId).HasColumnName("userId");
         }
     }
 
@@ -98,4 +109,10 @@ namespace StartUpApi.Models
 
         }
     }
+
+    #endregion
+
+    #region others
+  
+    #endregion
 }

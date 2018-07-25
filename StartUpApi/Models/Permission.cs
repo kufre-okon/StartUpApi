@@ -15,16 +15,16 @@ namespace StartUpApi.Models
         ///// This is not auto-generated Id, please specify it manuallys
         ///// </summary>
         [Key]
-        // [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public int permissionID { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        public int ID { get; set; }
         [StringLength(150)]
-        public string name { get; set; }
-        public int? parentid { get; set; }
-        [ForeignKey("parentid")]
+        public string Name { get; set; }
+        public int? ParentId { get; set; }
+        [ForeignKey("ParentId")]
         public virtual Permission PARENTPERMISSION { get; set; }
-        public int? level { get; set; }
+        public int? Level { get; set; }
         [StringLength(200)]
-        public string displayname { get; set; }
+        public string DisplayName { get; set; }
 
         public virtual ICollection<ApplicationRolePermission> APPLICATIONROLEPERMISSIONS { get; set; }
     }
