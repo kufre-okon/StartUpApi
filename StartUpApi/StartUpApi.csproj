@@ -2,12 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
+    <PostBuildEvent></PostBuildEvent>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netcoreapp1.1\StartUpApi.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Repository\ApplicationRoleRepository.cs" />
-    <Compile Remove="Repository\Infrastructure\DbFactory.cs" />
-    <Compile Remove="Repository\Interface\IDbFactory.cs" />
+    <Compile Remove="Data\Repository\ApplicationRoleRepository.cs" />
+    <Compile Remove="Data\Repository\Infrastructure\DbFactory.cs" />
+    <Compile Remove="Data\Repository\Interface\IDbFactory.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +28,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="1.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="1.1.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="2.0.0" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.0.8.11" />
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +36,14 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Pager\Pager.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="DbPatches\patch00000001.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DbPatches\ReadMe.txt">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

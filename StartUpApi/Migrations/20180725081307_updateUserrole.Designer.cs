@@ -3,8 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using StartUpApi.Models;
-using StartUpApi.Models.Enums;
+using StartUpApi.Data.Models;
 
 namespace StartUpApi.Migrations
 {

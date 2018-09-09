@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,6 +9,13 @@ namespace StartUpApi.Utility
     public static class Helper
     {
         #region strings
+
+
+        public static string GetModelStateErrors(ModelStateDictionary modelState)
+        {
+            return string.Join("\n", modelState.Keys.SelectMany(k => modelState[k].Errors).Select(m => m.ErrorMessage));
+        }
+
         /// <summary>
         /// Convert to base64 representation
         /// </summary>

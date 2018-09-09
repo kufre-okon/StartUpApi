@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using StartUpApi.Models;
-using StartUpApi.Models.Enums;
+using StartUpApi.Data.Models;
+using StartUpApi.Data.Models.Enums;
 
 namespace StartUpApi.Migrations
 {
@@ -17,7 +17,7 @@ namespace StartUpApi.Migrations
                 .HasAnnotation("ProductVersion", "1.1.2")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("StartUpApi.Models.ApplicationClient", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.ApplicationClient", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
@@ -40,10 +40,10 @@ namespace StartUpApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ApplicationClients");
+                    b.ToTable("ApplicationClient");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.ApplicationRole", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.ApplicationRole", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
@@ -68,7 +68,7 @@ namespace StartUpApi.Migrations
                     b.ToTable("ApplicationRole");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.ApplicationRolePermission", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.ApplicationRolePermission", b =>
                 {
                     b.Property<int>("permissionId");
 
@@ -81,7 +81,7 @@ namespace StartUpApi.Migrations
                     b.ToTable("ApplicationRolePermission");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.ApplicationUser", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
@@ -118,6 +118,8 @@ namespace StartUpApi.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed");
 
+                    b.Property<string>("ProfilePictureUrl");
+
                     b.Property<string>("SecurityStamp");
 
                     b.Property<string>("Surname");
@@ -131,24 +133,81 @@ namespace StartUpApi.Migrations
                     b.ToTable("ApplicationUser");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.ApplicationUserRole", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.ApplicationUserRole", b =>
                 {
-                    b.Property<string>("UserId");
-
                     b.Property<string>("RoleId");
+
+                    b.Property<string>("UserId");
 
                     b.Property<string>("Discriminator");
 
-                    b.HasKey("UserId", "RoleId");
+                    b.HasKey("RoleId", "UserId");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex("UserId");
 
-                    b.ToTable("ApplicationUserRoles");
+                    b.ToTable("ApplicationUserRole");
 
                     b.HasDiscriminator().HasValue("ApplicationUserRole");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.Permission", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.AuditTrail", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(600);
+
+                    b.Property<string>("Operation")
+                        .HasMaxLength(50);
+
+                    b.Property<DateTime>("OperationDate");
+
+                    b.Property<string>("OperationDescription")
+                        .HasMaxLength(200);
+
+                    b.Property<string>("UserId");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AuditTrail");
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.DbVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int>("VersionNumber");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DbVersion");
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.OrganizationUnit", b =>
+                {
+                    b.Property<int>("OrganizationId")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int?>("Level");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(70);
+
+                    b.Property<int?>("ParentId");
+
+                    b.HasKey("OrganizationId");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("OrganizationUnit");
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.Permission", b =>
                 {
                     b.Property<int>("ID");
 
@@ -166,10 +225,10 @@ namespace StartUpApi.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Permissions");
+                    b.ToTable("Permission");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.RefreshToken", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.RefreshToken", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
@@ -194,10 +253,23 @@ namespace StartUpApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshToken");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.UserPermission", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.UserOrganization", b =>
+                {
+                    b.Property<int>("OrganizationId");
+
+                    b.Property<string>("UserId");
+
+                    b.HasKey("OrganizationId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserOrganization");
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.UserPermission", b =>
                 {
                     b.Property<int>("permissionId")
                         .HasColumnName("permissionId");
@@ -212,50 +284,104 @@ namespace StartUpApi.Migrations
                     b.ToTable("UserPermission");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.ApplicationRolePermission", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.UserSession", b =>
                 {
-                    b.HasOne("StartUpApi.Models.Permission", "PERMISSION")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int>("appMode");
+
+                    b.Property<DateTime?>("endTime");
+
+                    b.Property<DateTime>("startDate");
+
+                    b.Property<string>("userId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("userId");
+
+                    b.ToTable("UserSession");
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.ApplicationRolePermission", b =>
+                {
+                    b.HasOne("StartUpApi.Data.Models.Permission", "PERMISSION")
                         .WithMany("APPLICATIONROLEPERMISSIONS")
                         .HasForeignKey("permissionId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("StartUpApi.Models.ApplicationRole", "ROLE")
+                    b.HasOne("StartUpApi.Data.Models.ApplicationRole", "ROLE")
                         .WithMany("ROLEPERMISSIONS")
                         .HasForeignKey("roleId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.ApplicationUserRole", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.ApplicationUserRole", b =>
                 {
-                    b.HasOne("StartUpApi.Models.ApplicationRole", "ROLE")
+                    b.HasOne("StartUpApi.Data.Models.ApplicationRole", "ROLE")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("StartUpApi.Models.ApplicationUser", "USER")
-                        .WithMany()
+                    b.HasOne("StartUpApi.Data.Models.ApplicationUser", "USER")
+                        .WithMany("USERROLES")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.Permission", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.AuditTrail", b =>
                 {
-                    b.HasOne("StartUpApi.Models.Permission", "PARENTPERMISSION")
+                    b.HasOne("StartUpApi.Data.Models.ApplicationUser", "USER")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.OrganizationUnit", b =>
+                {
+                    b.HasOne("StartUpApi.Data.Models.OrganizationUnit", "PARENT")
                         .WithMany()
                         .HasForeignKey("ParentId");
                 });
 
-            modelBuilder.Entity("StartUpApi.Models.UserPermission", b =>
+            modelBuilder.Entity("StartUpApi.Data.Models.Permission", b =>
                 {
-                    b.HasOne("StartUpApi.Models.Permission", "PERMISSION")
+                    b.HasOne("StartUpApi.Data.Models.Permission", "PARENTPERMISSION")
+                        .WithMany()
+                        .HasForeignKey("ParentId");
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.UserOrganization", b =>
+                {
+                    b.HasOne("StartUpApi.Data.Models.OrganizationUnit", "ORGANIZATIONUNIT")
+                        .WithMany("USERORGANIZATION")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("StartUpApi.Data.Models.ApplicationUser", "USER")
+                        .WithMany("USERORGANIZATION")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.UserPermission", b =>
+                {
+                    b.HasOne("StartUpApi.Data.Models.Permission", "PERMISSION")
                         .WithMany()
                         .HasForeignKey("permissionId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("StartUpApi.Models.ApplicationUser", "USER")
+                    b.HasOne("StartUpApi.Data.Models.ApplicationUser", "USER")
                         .WithMany()
                         .HasForeignKey("userId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("StartUpApi.Data.Models.UserSession", b =>
+                {
+                    b.HasOne("StartUpApi.Data.Models.ApplicationUser", "USER")
+                        .WithMany()
+                        .HasForeignKey("userId");
                 });
         }
     }

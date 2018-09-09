@@ -8,5 +8,6 @@ namespace StartUpApi.Utility
     public  class Constants
     {
        public const string SUPER_ADMIN_USERNAME= "SuperAdmin";
+        public const string USER_PROFILE_PICTURE_DIR = "images/users";
     }
 }

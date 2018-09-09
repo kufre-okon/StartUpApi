@@ -3,14 +3,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using StartUpApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Threading.Tasks;
 using StartUpApi.Data;
 using System;
+using StartUpApi.Utility;
+using Microsoft.AspNetCore.Http;
+using StartUpApi.Data.Models;
+using StartUpApi.Data.DbScript;
 
 namespace StartUpApi
 {
@@ -33,6 +34,7 @@ namespace StartUpApi
         {
             // Add framework services.
             services.AddDbContext<ApplicationContext>(opts => opts.UseSqlServer(Configuration.GetConnectionString("StartUpDbConnection")));
+            services.AddUnitOfWork<ApplicationContext>();
 
             services.AddIdentity<ApplicationUser, ApplicationRole>(cfg =>
             {
@@ -40,12 +42,10 @@ namespace StartUpApi
                 cfg.Password.RequiredLength = 6;
                 cfg.Password.RequireNonAlphanumeric = true;
                 cfg.Password.RequireUppercase = false;
-                
-                cfg.SignIn.RequireConfirmedEmail = true;
-
+                //cfg.SignIn.RequireConfirmedEmail = true;
                 cfg.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 cfg.Lockout.MaxFailedAccessAttempts = 5;
-                
+
                 cfg.User.RequireUniqueEmail = true;
 
                 // if we are accessing the /api and an unauthorized request is made
@@ -65,8 +65,26 @@ namespace StartUpApi
             .AddDefaultTokenProviders();
 
             services.AddScoped<IDbInitializer, DbInitializer>();
+            services.AddSingleton<IConfiguration>(Configuration);
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IDbPatchManager, DbPatchManager>();
+            services.RegisterServices();
 
             services.AddMvc();
+
+            // Swagger API Doc
+            services.RegisterSwaggerServices(Configuration);
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllHeaders",
+                      builder =>
+                      {
+                          builder.AllowAnyOrigin()
+                                 .AllowAnyHeader()
+                                 .AllowAnyMethod();
+                      });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,26 +92,31 @@ namespace StartUpApi
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-            
+
             app.UseIdentity();
+            app.UseCors("AllowAllHeaders");
+            //app.UseAuthentication();
 
             app.UseJwtBearerAuthentication(new JwtBearerOptions
             {
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true,
-                TokenValidationParameters = new TokenValidationParameters
-                {
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetSection("AppConfiguration:Key").Value)),
-                    ValidAudience = Configuration.GetSection("AppConfiguration:AppIssuer").Value,
-                    ValidateIssuerSigningKey = true,
-                    ValidateLifetime = true,
-                    ValidIssuer = Configuration.GetSection("AppConfiguration:AppIssuer").Value
-                }
+                AutomaticAuthenticate = true, 
+                AutomaticChallenge = true, 
+                TokenValidationParameters = TokenUtility.BuildTokenValidationParameters(Configuration.GetSection("AppConfiguration"))
             });
 
-            app.UseMvc();
+            app.UseStaticFiles();
 
-            dbSeeder.Seed().Wait();
+            app.UseMvc(routes =>
+            {
+                routes.MapRoute(
+                    name: "default",
+                    template: "{controller=Home}/{action=Index}/{id?}");
+            });
+
+            app.UseSwaggerDocumentation();
+
+            // uncomment below code to run seed methods on startup
+            // dbSeeder.Seed().Wait();
         }
     }
 }

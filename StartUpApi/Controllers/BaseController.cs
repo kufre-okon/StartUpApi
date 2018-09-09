@@ -1,64 +1,107 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using StartUpApi.Models;
+using StartUpApi.Data.Models;
+using StartUpApi.Exceptions;
 using System;
 using System.Threading.Tasks;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace StartUpApi.Controllers
-{
-    public class BaseController : Controller
+{    
+    public abstract class BaseController : Controller
     {
-        protected virtual ResponseBase ExecuteRequest(Action executeMethod)
+        public BaseController()
+        {
+        }
+
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public virtual ResponseBase OnError(string errorMessage)
+        {
+            ResponseBase responseBase = new ResponseBase();
+            responseBase.Message = errorMessage;
+            responseBase.Status = false;
+            
+            return responseBase;
+        }
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public virtual ResponseBase<T> OnError<T>(string errorMessage)
+        {
+            ResponseBase<T> responseBase = new ResponseBase<T>();
+            responseBase.Message = errorMessage;
+            responseBase.Status = false;
+            
+            return responseBase;
+        }
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public virtual ResponseBase ExecuteRequest(Action executeMethod)
         {
             ResponseBase responseBase = new ResponseBase();
             try
             {
                 executeMethod();
             }
-            catch (Exception ex)
-            {               
+            catch (ApplicationException ex)
+            {
                 responseBase.Message = ex.Message;
                 responseBase.Status = false;
-                responseBase.StatusCode = ResponseCode.Bad_Request;
+            }
+            catch (Exception ex)
+            {
+                // only application exception are returned to the frontend, 
+                // general exception like this might carries sensitive information and needs to be logged alone for developers usage
+                
+                //ErrorLogger.LogError(ex, HttpContext.Current.Server);
+                responseBase.Message = "An error occured while processing your request";
+                responseBase.Status = false;
+                
             }
             return responseBase;
         }
-
-        protected virtual ResponseBase<T> ExecuteRequest<T>(Func<T> executeMethod)
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public virtual async Task<ResponseBase> ExecuteRequestAsync(Func<Task> executeMethod)
         {
-            ResponseBase<T> responseBase = new ResponseBase<T>();
+            ResponseBase responseBase = new ResponseBase();
             try
             {
-                responseBase.Payload = executeMethod();
+                await executeMethod();
             }
-            catch (Exception ex)
+            catch (ApplicationException ex)
             {
                 responseBase.Message = ex.Message;
                 responseBase.Status = false;
-                responseBase.StatusCode = ResponseCode.Bad_Request;
+                
+            }
+            catch (Exception ex)
+            {
+                //ErrorLogger.LogError(ex, HttpContext.Current.Server);
+                responseBase.Message = "An error occured while processing your request";
+                responseBase.Status = false;
+                
             }
             return responseBase;
         }
-
-        protected virtual async Task<ResponseBase<T>> ExecuteRequestAsync<T>(Func<Task<T>> executeMethod)
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public virtual async Task<ResponseBase<T>> ExecuteRequestAsync<T>(Func<Task<T>> executeMethod)
         {
             ResponseBase<T> responseBase = new ResponseBase<T>();
-
             try
             {
                 responseBase.Payload = await executeMethod();
             }
-            catch (Exception ex)
+            catch (ApplicationException ex)
             {
                 responseBase.Message = ex.Message;
                 responseBase.Status = false;
-                responseBase.StatusCode = ResponseCode.Bad_Request;
+                
+            }
+            catch (Exception ex)
+            {
+                //ErrorLogger.LogError(ex, HttpContext.Current.Server);
+                responseBase.Message = "An error occured while processing your request";
+                responseBase.Status = false;
+                
             }
             return responseBase;
-
         }
-
-
+       
     }
 }
