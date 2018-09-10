@@ -95,7 +95,6 @@ namespace StartUpApi
 
             app.UseIdentity();
             app.UseCors("AllowAllHeaders");
-            //app.UseAuthentication();
 
             app.UseJwtBearerAuthentication(new JwtBearerOptions
             {
