@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Threading.Tasks;
-using StartUpApi.Data;
 using System;
-using StartUpApi.Utility;
 using Microsoft.AspNetCore.Http;
-using StartUpApi.Data.Models;
-using StartUpApi.Data.DbScript;
+using Data.Models;
+using Data;
+using Data.DbScript;
+using Services.Utilities;
 
 namespace StartUpApi
 {

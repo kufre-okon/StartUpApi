@@ -1,18 +1,17 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using StartUpApi.Data.DTO;
 using System;
 using StartUpApi.Utility;
-using StartUpApi.Data.Repository;
-using StartUpApi.Data.Models;
-using StartUpApi.Data.Models.Extensions;
 using Microsoft.AspNetCore.Authorization;
-using StartUpApi.Services.Interface;
 using System.Collections.Generic;
 using Pager.Interface;
-using StartUpApi.Data.Models.Enums;
 using System.Security.Claims;
-using StartUpApi.Exceptions;
+using Data.Models;
+using Data.DTO;
+using General.Exceptions;
+using Data.Models.Enums;
+using General;
+using Services.Interface;
 
 namespace StartUpApi.Controllers
 {

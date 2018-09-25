@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using StartUpApi.Data.Models;
-using StartUpApi.Exceptions;
+﻿using Data.Models;
+using General.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 
 
 namespace StartUpApi.Controllers
-{    
+{
     public abstract class BaseController : Controller
     {
         public BaseController()
