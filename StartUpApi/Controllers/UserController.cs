@@ -12,6 +12,7 @@ using General.Exceptions;
 using Data.Models.Enums;
 using General;
 using Services.Interface;
+using System.Linq;
 
 namespace StartUpApi.Controllers
 {
@@ -46,6 +47,7 @@ namespace StartUpApi.Controllers
             return await ExecuteRequestAsync(async () =>
             {
                 var user = await _userService.GetUser(Id);
+                user.ProfilePictureUrl= $"{Request.Scheme}://{Request.Host.Value}{user.ProfilePictureUrl}";
                 return user;
             });
         }
@@ -105,9 +107,11 @@ namespace StartUpApi.Controllers
         public async Task<ResponseBase<IPaginate<UserDto>>> SearchUser([FromQuery] int page = 1, [FromQuery]int pageSize = 10, [FromQuery]string searchTerm = "",
             [FromQuery]string roleId = "", [FromQuery] string orderBy = "Username", [FromQuery]OrderByEnum orderMode = OrderByEnum.ASC, [FromQuery]bool includeInActive = true)
         {
-            return await ExecuteRequestAsync(() =>
+            return await ExecuteRequestAsync(async () =>
            {
-               var result = _userService.SearchUser(page, pageSize, searchTerm, roleId, orderBy, (orderMode == OrderByEnum.ASC), includeInActive);
+               var result = await _userService.SearchUser(page, pageSize, searchTerm, roleId, orderBy, (orderMode == OrderByEnum.ASC), includeInActive);
+               result.Items.ToList().ForEach(e => e.ProfilePictureUrl = $"{Request.Scheme}://{Request.Host.Value}{e.ProfilePictureUrl}");
+
                return result;
            });
         }
@@ -164,12 +168,12 @@ namespace StartUpApi.Controllers
         /// <param name="status"></param>
         /// <returns></returns>
         [HttpPost, Route("{id}/changeStatus")]
-        public async Task<ResponseBase> ChangeUserAccountStatus(string Id, [FromBody]bool status)
+        public ResponseBase ChangeUserAccountStatus(string Id, [FromBody]bool status)
         {
-            return await ExecuteRequestAsync(async () =>
-            {
-                await _userService.ToggleUserAccount(Id, status);
-            });
+            return ExecuteRequest(() =>
+           {
+               _userService.ToggleUserAccount(Id, status);
+           });
         }
 
         /// <summary>

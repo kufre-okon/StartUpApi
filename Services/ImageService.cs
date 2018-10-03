@@ -9,6 +9,7 @@ using Data.Repository;
 using Data.DTOs;
 using General;
 using Services.Interface;
+using Data.Repository.Interface;
 
 namespace Services
 {
@@ -19,14 +20,17 @@ namespace Services
     {
         readonly IApplicationUserRepository _userRepo;
         readonly IHostingEnvironment _env;
+        readonly IUnitOfWork _unitOfWork;
+
 
         /// <summary>
         /// Image service constructor
         /// </summary>
-        public ImageService(IHostingEnvironment env, IApplicationUserRepository userRepo)
+        public ImageService(IHostingEnvironment env, IApplicationUserRepository userRepo, IUnitOfWork unitOfWork)
         {
             _userRepo = userRepo;
             _env = env;
+            _unitOfWork = unitOfWork;
         }
 
         /// <summary>
@@ -44,7 +48,11 @@ namespace Services
             {
                 DeleteFile(oldImageUrl, false);
             }
-            return UploadFile(file, Constants.USER_PROFILE_PICTURE_DIR, (user?.UserName ?? username));
+            var result = UploadFile(file, Constants.USER_PROFILE_PICTURE_DIR, (user?.UserName ?? username));
+            user.ProfilePictureUrl = result.LocalFilePath;
+            _userRepo.Update(user);
+            _unitOfWork.SaveChanges();           
+            return result;
         }
 
         /// <summary>
@@ -85,8 +93,8 @@ namespace Services
                 string filename = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
 
                 string dirPath = "/media/" + (folder ?? "images");
-                string mapDirPath = getFullPath(dirPath);
-                if (!CreateDirIfNotExits(mapDirPath))
+                string mapDirPath = mapPath(dirPath);
+                if (!CreateDirIfNotExits( mapDirPath))
                     return fileUploadResult;
                 string extension = Path.GetExtension(filename);
                 string filePath = GetUniqueFilePath(mapDirPath, newFileName?? filename, extension);
@@ -114,20 +122,17 @@ namespace Services
         public void DeleteFile(string filepath, bool isPhysicalPath = true)
         {
             if (!isPhysicalPath)
-                filepath = getFullPath(filepath);
+                filepath = mapPath(filepath);
             if (File.Exists(filepath))
                 File.Delete(filepath);
-        }
+        }       
 
-        #region private
+        #region private       
 
-        private string getFullPath(params string[] paths)
+        private string mapPath(string path)
         {
             var webRoot = _env.WebRootPath;
-            var _paths = paths.ToList();
-            _paths.Insert(0, webRoot);
-            paths = _paths.ToArray();
-            var fullPath = System.IO.Path.Combine(paths);
+            var fullPath = Path.GetFullPath(webRoot + path);
             return fullPath;
         }
 
@@ -152,7 +157,7 @@ namespace Services
         {           
             string filename = Path.GetFileNameWithoutExtension(fileName);
 
-            string filePath = Path.Combine(dirPath, fileName);
+            string filePath = Path.Combine(dirPath, fileName + extension);
             for (int i = 1; File.Exists(filePath); i++)
             {
                 string temp = string.Format("{0}({1}){2}", filename, i, extension);

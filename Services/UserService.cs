@@ -38,7 +38,7 @@ namespace Services
 
         public async Task<UserDto> GetUser(string userId)
         {
-            var user = _userRepo.Single(predicate: u => u.Id == userId, 
+            var user = _userRepo.Single(predicate: u => u.Id == userId,
                 includes: new List<Func<IQueryable<ApplicationUser>, IIncludableQueryable<ApplicationUser, object>>>{
                     u => u.Include(t => t.USERROLES).ThenInclude(ur=>ur.ROLE)
                 });
@@ -102,41 +102,44 @@ namespace Services
 
         public async Task ChangePassword(PasswordChangeRequest data, string userId)
         {
-            await ExecuteVoidAsync(true, AuditTrailOperations.ChangePassword, _unitOfWork, async () =>
+            await ExecuteAsync(false, AuditTrailOperations.ChangePassword, _unitOfWork, async () =>
             {
                 var user = _userRepo.GetById(userId);
 
                 var re = await _userManager.ChangePasswordAsync(user, data.CurrentPassword, data.NewPassword);
                 if (!re.Succeeded && re.Errors.Count() > 0)
-                    throw new ApplicationException(string.Join("\n", re.Errors));
+                    throw new ApplicationException(string.Join("\n", re.Errors.Select(err => err.Description)));
                 if (user.IsTemporaryPassword)
                 {
                     user.IsTemporaryPassword = false;
                     _userRepo.Update(user);
                 }
+                return string.Empty;
             });
         }
 
-        public void UpdateUser(UserDto user)
+        public async Task UpdateUser(UserDto user)
         {
-            ExecuteVoid(true, AuditTrailOperations.UpdateUser, _unitOfWork, () =>
-           {
-               var _user = user.ToApplicationUser();
-               _user.USERROLES.Clear();
-
+            await ExecuteAsync(true, AuditTrailOperations.UpdateUser, _unitOfWork, async () =>
+            {
+                var _user = user.ToApplicationUser();
+                var oldUser = _userRepo.Single(e => e.Id == user.UserID);
+                _user.PasswordHash = oldUser.PasswordHash;
+                _user.ProfilePictureUrl = oldUser.ProfilePictureUrl; // profile picture are set using a different API
+                _user.USERROLES.Clear();
                // The default LockoutEnabled property for a User is not the property indicating if a user is currently being locked out or not. It's a property indicating if the user should be subject to lockout or not once the AccessFailedCount reaches the MaxFailedAccessAttemptsBeforeLockout value
                if (user.LockoutEnabled)
-               {
-                   _user.LockoutEnd = DateTime.UtcNow.AddYears(60); // set date very far in the future to enforce logout
+                {
+                    _user.LockoutEnd = DateTime.UtcNow.AddYears(60); // set date very far in the future to enforce logout
                }
-               else
-               {
-                   _user.LockoutEnd = null;
-               }
-               _userRepo.Update(_user);
-               updateUserRoles(user.UserID, user.Roles.Select(e => e.Id).ToList());
-               return null;
-           });
+                else
+                {
+                    _user.LockoutEnd = null;
+                }
+                _userRepo.Update(_user);
+                await updateUserRoles(user.UserID, user.Roles.Select(e => e.Id).ToList());
+                return string.Empty;
+            });
         }
 
         public async Task<IPaginate<UserDto>> SearchUser(int page, int pageSize, string searchTerm, string roleId, string orderBy, bool orderByASC, bool includeInActive)
@@ -151,28 +154,28 @@ namespace Services
 
         public async Task UpdateUserRole(string userId, List<string> roles)
         {
-            await ExecuteVoidAsync(true, AuditTrailOperations.UpdateUserRole, _unitOfWork, () =>
+            await ExecuteAsync(true, AuditTrailOperations.UpdateUserRole, _unitOfWork, async () =>
             {
-                updateUserRoles(userId, roles);
-                return null;
+                await updateUserRoles(userId, roles);
+                return string.Empty;
             });
         }
 
-        public async Task ToggleUserAccount(string userId, bool enable)
+        public void ToggleUserAccount(string userId, bool enable)
         {
             var u = _userRepo.GetById(userId);
-            await ExecuteVoidAsync(false, enable ? AuditTrailOperations.EnableUserAccount : AuditTrailOperations.DisableUserAccount, _unitOfWork, () =>
-            {
-                u.IsActive = enable;
-                _userRepo.Update(u);
-                return null;
-            }, $"{(enable ? "Enabled" : "Disabled")} user #{u.UserName}");
+            ExecuteVoid(false, enable ? AuditTrailOperations.EnableUserAccount : AuditTrailOperations.DisableUserAccount, _unitOfWork, () =>
+           {
+               u.IsActive = enable;
+               _userRepo.Update(u);
+               return null;
+           }, $"{(enable ? "Enabled" : "Disabled")} user #{u.UserName}");
         }
 
         public async Task ResetPassword(PasswordResetRequest model)
         {
             var user = _userRepo.GetById(model.UserId);
-            await ExecuteVoidAsync(false, AuditTrailOperations.ResetPassword, _unitOfWork, async () =>
+            await ExecuteAsync(false, AuditTrailOperations.ResetPassword, _unitOfWork, async () =>
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                 var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
@@ -185,6 +188,7 @@ namespace Services
                 {
                     throw new ApplicationException(string.Join("\n", result.Errors));
                 }
+                return string.Empty;
             }, $"Reset password for #{user.UserName}");
         }
 
@@ -197,7 +201,7 @@ namespace Services
 
         public async Task UpdateUserSpecialPermissions(string userId, List<UserSpecialPermissionData> permissions)
         {
-            await ExecuteVoidAsync(true, AuditTrailOperations.Others, _unitOfWork, () =>
+            await ExecuteAsync(true, AuditTrailOperations.Others, _unitOfWork, async () =>
             {
                 var _userPermRepo = _unitOfWork.GetRepository<UserPermission>();
 
@@ -205,9 +209,9 @@ namespace Services
                 _userPermRepo.Delete(userPerms);
 
                 var newUserPerms = permissions.Where(e => e.included).Select(e => new UserPermission() { userId = userId, permissionId = e.permissionId }).ToList();
-                _userPermRepo.Add(newUserPerms);
+                await _userPermRepo.AddAsync(newUserPerms);
 
-                return null;
+                return string.Empty;
             }, "Update user special permissions");
         }
 
@@ -244,7 +248,7 @@ namespace Services
               newUser.SecurityStamp = Guid.NewGuid().ToString("D");
               var result = await _userManager.CreateAsync(newUser, user.Password);
               if (!result.Succeeded)
-                  throw new ApplicationException(string.Join("\n", result.Errors.Select(e=>e.Description)));              
+                  throw new ApplicationException(string.Join("\n", result.Errors.Select(e => e.Description)));
               return newUser.ToUserDto();
           });
         }
@@ -261,7 +265,7 @@ namespace Services
 
         #region private 
 
-        private void updateUserRoles(string userId, List<string> roles)
+        private async Task updateUserRoles(string userId, List<string> roles)
         {
             _userRoleRepo.Delete(e => e.UserId == userId);
             _unitOfWork.SaveChanges(); // this is necessary because userId above is being tracked
@@ -270,7 +274,7 @@ namespace Services
                 RoleId = e,
                 UserId = userId
             });
-            _userRoleRepo.Add(_roles);
+            await _userRoleRepo.AddAsync(_roles);
         }
 
         #endregion

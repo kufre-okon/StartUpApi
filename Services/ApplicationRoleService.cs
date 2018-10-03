@@ -64,9 +64,9 @@ namespace Services
             return roles.ToList();
         }
 
-        public async Task UpdateRole(ApplicationRole role)
+        public void UpdateRole(ApplicationRole role)
         {
-            await ExecuteVoidAsync(true, AuditTrailOperations.UpdateRole, _unitOfWork, () =>
+             ExecuteVoid(true, AuditTrailOperations.UpdateRole, _unitOfWork, () =>
             {
                 _roleRepo.Update(role);
 

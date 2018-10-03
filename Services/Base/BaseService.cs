@@ -148,30 +148,7 @@ namespace Services.Base
                 return null;
             }, operationDescription);
         }
-
-        /// <summary>
-        /// Execute <paramref name="executor"/> asynchronously using Task.Run().
-        /// Used to execute 'void' methods asynchronously.
-        /// The 'void' methods should not be marked 'Task'
-        /// </summary>
-        /// <param name="useTransaction">Use transaction to execute the operation. It will automatically rollback if error occurs</param>
-        /// <param name="operation">The audit trail operation</param>
-        /// <param name="unitOfWork"></param>
-        /// <param name="executor"></param>
-        /// <param name="operationDescription"></param>
-        /// <returns></returns>
-        protected async Task ExecuteVoidAsync(bool useTransaction,  AuditTrailOperations operation, IUnitOfWork unitOfWork, Func<Task> executor, string operationDescription = null)
-        {
-            await Task.Run(() =>
-            {
-                Execute<object>(useTransaction, operation, unitOfWork, () =>
-                {
-                    executor();
-                    return null;
-                }, operationDescription);
-            });
-        }
-
+      
         private void WriteAuditRecord(AuditTrailOperations action,  string description, string error = null)
         {
             if (!string.IsNullOrWhiteSpace(currentUserId))

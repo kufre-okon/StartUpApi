@@ -44,5 +44,6 @@ namespace Services.Interface
         /// <param name="filepath">Full physical file path</param>
         /// <param name="isPhysicalPath">Indicate whether the <paramref name="filepath"/> is relative or physical </param>
         void DeleteFile(string filepath, bool isPhysicalPath = true);
+      
     }
 }

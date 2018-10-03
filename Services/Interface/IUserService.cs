@@ -16,9 +16,9 @@ namespace Services.Interface
         void DeleteUser(string userId);
         Task<List<PermissionDto>> GetUserPermissions(string userId, bool isSuperAdmin = false);
         Task ChangePassword(PasswordChangeRequest data, string userId);
-        void UpdateUser(UserDto user);
+        Task UpdateUser(UserDto user);
         Task UpdateUserRole(string userId, List<string> roles);
-        Task ToggleUserAccount(string userId, bool status);
+        void ToggleUserAccount(string userId, bool status);
         Task ResetPassword(PasswordResetRequest model);
         Task ResetSpecialPerimssions(string userId);
         Task UpdateUserSpecialPermissions(string userId, List<UserSpecialPermissionData> data);

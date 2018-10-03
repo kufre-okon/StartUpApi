@@ -9,7 +9,7 @@ namespace Services.Interface
     {
         void AddRole(RoleDto role);
         Task<RoleDto> GetRole(string Id);
-        Task UpdateRole(ApplicationRole menu);
+        void UpdateRole(ApplicationRole menu);
         Task<List<RoleDto>> GetList();
         Task<List<RoleListDto>> GetListLightWeight();
         Task<List<RoleDto>> GetByPermission( int permissionId);

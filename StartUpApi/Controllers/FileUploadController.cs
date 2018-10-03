@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Services.Interface;
 using Data.Models;
 using Data.DTOs;
+using Microsoft.AspNetCore.Http;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -26,24 +27,24 @@ namespace StartUpApi.Controllers
         public FileUploadController(IImageService imgService)
         {
             _imgService = imgService;
-        }
+        }       
 
         /// <summary>
         /// Upload user picture. The image file is passed through form data
         /// </summary>
         /// <param name="username"></param>
         /// <returns></returns>
-        [HttpPost]
-        public async Task<ResponseBase<FileUploadResult>> UploadUserImage(string username)
+        [HttpPost("UploadUserProfile/{username}")]
+        public async Task<ResponseBase<FileUploadResult>> UploadUserImage(string username, IFormFile file)
         {
-            return await ExecuteRequestAsync(() =>
-             {
-                 var file = Request.Form.Files[0];
-                 var result = _imgService.UploadUserProfilePicture(username, file);
-                 return result;
-             });
+            return await ExecuteRequestAsync(async () =>
+           {
+               var result = await _imgService.UploadUserProfilePicture(username, file);
+               // map the path before sending to the frontend
+               result.LocalFilePath = $"{Request.Scheme}://{Request.Host.Value}{result.LocalFilePath}";
+
+               return result;
+           });
         }
-
-
     }
 }

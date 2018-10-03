@@ -48,6 +48,9 @@ namespace StartUpApi.Controllers
                 var ip = HttpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress?.ToString();
                 var response = await _signInService.Login(model, ip);
                 response.Permissions = await _userService.GetUserPermissions(response.UserId, response.Username.Equals(Constants.SUPER_ADMIN_USERNAME, StringComparison.CurrentCultureIgnoreCase));
+                // map the path before sending to the frontend
+                response.ProfilePictureUrl = $"{Request.Scheme}://{Request.Host.Value}{response.ProfilePictureUrl}";
+
                 return response;
             });
         }
